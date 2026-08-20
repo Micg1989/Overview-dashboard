@@ -20,6 +20,8 @@ const SPREADSHEET_2D = "1zAf3l1dkhpW1ZqJsEcMqN5Duqdvf4aYZpWrC8euOc7M"; // 2D Arr
 
 let tokenClient = null;
 let accessToken = null;
+let lastStockBySite = null; // populated on refresh; site label -> flagged cars
+let selectedSite = null; // site label currently shown in the STOCK section
 
 function gbpShort(n) {
   const abs = Math.abs(n);
@@ -104,10 +106,6 @@ function renderLiveUpdate(data) {
   setText('live-gpYesterday', data.gpYesterday);
   setText('live-gapToTarget-caption', `GP · ${data.gapToTargetLabel}`);
   setText('live-dayClass', data.dayClass);
-  setText('live-stockCount-spoke', `${data.stockCount} FLAGGED`);
-
-  const badge = document.getElementById('live-stockCount-badge');
-  if (badge) badge.textContent = `${data.stockCount} FLAGGED`;
 
   const tbContainer = document.getElementById('live-timeblocks');
   if (tbContainer) {
@@ -122,11 +120,28 @@ function renderLiveUpdate(data) {
     }
   }
 
+  const ts = document.getElementById('live-synced-at');
+  if (ts) ts.textContent = `Last synced ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+}
+
+// Renders the flagged-car list for one site from the already-fetched,
+// cached `lastStockBySite` map — no network call, so switching sites is
+// instant. Called once after refresh (for the default site) and again on
+// every site-select change.
+function renderStockForSite(siteName) {
+  const items = (lastStockBySite && lastStockBySite[siteName]) || [];
+  selectedSite = siteName;
+
+  const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  setText('live-stockCount-spoke', `${items.length} FLAGGED`);
+  setText('live-stockCount-badge', `${items.length} FLAGGED`);
+  setText('live-site-caption', siteName);
+
   const stockWrap = document.getElementById('live-stock-section');
   const stockList = document.getElementById('live-stocklist');
   if (stockList) {
     stockList.innerHTML = '';
-    for (const car of data.stockItems) {
+    for (const car of items) {
       const row = document.createElement('div');
       row.style.cssText = "display:flex;gap:12px;align-items:flex-start";
       const regEl = document.createElement('div');
@@ -138,16 +153,35 @@ function renderLiveUpdate(data) {
       modelEl.textContent = car.model;
       const flagEl = document.createElement('div');
       flagEl.style.cssText = "font-size:11px;color:#5C8A93;margin-top:2px";
-      flagEl.textContent = car.flag;
+      flagEl.textContent = car.flags.map(f => `${f.type}: ${f.detail}`).join(' · ');
       body.appendChild(modelEl); body.appendChild(flagEl);
       row.appendChild(regEl); row.appendChild(body);
       stockList.appendChild(row);
     }
   }
-  if (stockWrap) stockWrap.style.display = data.stockItems.length > 0 ? '' : 'none';
+  if (stockWrap) stockWrap.style.display = Object.keys(lastStockBySite || {}).length > 0 ? '' : 'none';
+}
 
-  const ts = document.getElementById('live-synced-at');
-  if (ts) ts.textContent = `Last synced ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+// Rebuilds the site <select>'s options from the freshly-fetched bySite map,
+// keeping the user's current selection if that site still has flags, else
+// falling back to whichever site looks like Thornaby, else the first site.
+function populateSiteSelect(bySite) {
+  const select = document.getElementById('live-site-select');
+  if (!select) return null;
+
+  const siteNames = Object.keys(bySite);
+  select.innerHTML = '';
+  for (const name of siteNames) {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name.toUpperCase();
+    select.appendChild(opt);
+  }
+
+  let target = siteNames.includes(selectedSite) ? selectedSite : null;
+  if (!target) target = siteNames.find(n => n.toLowerCase().includes(SITE_FILTER)) || siteNames[0];
+  if (target) select.value = target;
+  return target;
 }
 
 function setButtonState(state) {
@@ -181,12 +215,11 @@ async function runRefresh() {
       gapToTargetLabel,
       dayClass: scheduleData.dayClass,
       timeBlocks: scheduleData.timeBlocks,
-      stockCount: stock.flagged.length,
-      stockItems: stock.flagged.map(c => ({
-        reg: c.reg, model: c.model,
-        flag: c.flags.map(f => `${f.type}: ${f.detail}`).join(' · '),
-      })),
     });
+
+    lastStockBySite = stock.bySite;
+    const siteToShow = populateSiteSelect(stock.bySite) || "Thornaby";
+    renderStockForSite(siteToShow);
 
     setButtonState('idle');
   } catch (err) {
@@ -225,4 +258,10 @@ function onRefreshClick() {
 // button with no listener at all.
 document.addEventListener('click', (e) => {
   if (e.target.closest('#live-refresh-btn')) onRefreshClick();
+});
+
+// Same delegation reasoning as the refresh button above: the site <select>
+// node can be replaced by a post-refresh re-render, so bind on document.
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'live-site-select') renderStockForSite(e.target.value);
 });

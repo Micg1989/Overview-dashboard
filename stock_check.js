@@ -190,6 +190,31 @@ function analyzeBlockJS(rowData, modelCol, maxRow, today) {
   return { model, reg, site, flags };
 }
 
+// Groups every flagged car (any site) by its site label, so the live view
+// can switch sites without re-fetching the sheet. Keyed by normalized site
+// text to avoid casing splitting one site into two entries; Thornaby sorts
+// first, the rest alphabetically by label.
+function groupFlaggedBySite(allCars) {
+  const bySite = new Map(); // normalized key -> { label, flagged: [] }
+  for (const c of allCars) {
+    if (c.flags.length === 0) continue;
+    const key = normJS(c.site);
+    if (!bySite.has(key)) bySite.set(key, { label: c.site, flagged: [] });
+    bySite.get(key).flagged.push(c);
+  }
+
+  const entries = [...bySite.values()].sort((a, b) => {
+    const aThornaby = normJS(a.label).includes(SITE_FILTER);
+    const bThornaby = normJS(b.label).includes(SITE_FILTER);
+    if (aThornaby !== bThornaby) return aThornaby ? -1 : 1;
+    return a.label.localeCompare(b.label);
+  });
+
+  const result = {};
+  for (const e of entries) result[e.label] = e.flagged;
+  return result;
+}
+
 // gridResponse: the sheets.get JSON body (sheets[0].properties.gridProperties,
 // sheets[0].data[0].rowData). today: JS Date.
 function analyzeStocklist(gridResponse, today) {
@@ -208,7 +233,8 @@ function analyzeStocklist(gridResponse, today) {
 
   const thornabyCars = allCars.filter(c => normJS(c.site).includes(SITE_FILTER));
   const flagged = thornabyCars.filter(c => c.flags.length > 0);
-  return { allCount: allCars.length, thornabyCount: thornabyCars.length, flagged };
+  const bySite = groupFlaggedBySite(allCars);
+  return { allCount: allCars.length, thornabyCount: thornabyCars.length, flagged, bySite };
 }
 
 if (typeof module !== 'undefined') module.exports = { analyzeStocklist, isGreenishJS, parseFlexibleDateJS };
