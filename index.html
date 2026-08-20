@@ -25,7 +25,7 @@ a:hover{color:#7FE9FF}
 </style>
 </helmet>
 
-<div style="width:620px;margin:0 auto;background:radial-gradient(ellipse at 50% 0%, rgba(0,229,255,.09), transparent 55%), #05070C;color:#CFE9EE;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,229,255,.3);border-radius:6px;box-shadow:0 0 60px rgba(0,229,255,.12)">
+<div style="width:100%;max-width:1040px;margin:0 auto;background:radial-gradient(ellipse at 50% 0%, rgba(0,229,255,.09), transparent 55%), #05070C;color:#CFE9EE;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,229,255,.3);border-radius:6px;box-shadow:0 0 60px rgba(0,229,255,.12);box-sizing:border-box">
 
   <div style="padding:22px 28px 0;display:flex;justify-content:space-between;align-items:flex-start">
     <div>
@@ -41,8 +41,8 @@ a:hover{color:#7FE9FF}
     </div>
   </div>
 
-  <div style="position:relative;height:360px;margin:6px 0 0">
-    <svg width="620" height="360" viewBox="0 0 620 360" style="position:absolute;inset:0">
+  <div style="position:relative;width:620px;max-width:100%;aspect-ratio:620/360;margin:6px auto 0">
+    <svg width="620" height="360" viewBox="0 0 620 360" style="position:absolute;inset:0;width:100%;height:100%">
       <circle cx="310" cy="180" r="60" fill="none" stroke="rgba(0,229,255,.35)"></circle>
       <circle cx="310" cy="180" r="105" fill="none" stroke="rgba(0,229,255,.15)" stroke-dasharray="2 6"></circle>
       <circle cx="310" cy="180" r="150" fill="none" stroke="rgba(0,229,255,.09)" stroke-dasharray="1 8"></circle>
@@ -76,41 +76,41 @@ a:hover{color:#7FE9FF}
       </g>
     </svg>
 
-    <div style="position:absolute;left:310px;top:180px;transform:translate(-50%,-50%);width:150px;height:150px;border-radius:50%;border:1px solid rgba(0,229,255,.18);animation:pulseglow 4s ease-in-out infinite"></div>
-    <div style="position:absolute;left:310px;top:180px;transform:translate(-50%,-50%);width:112px;height:112px;border-radius:50%;background:radial-gradient(circle, rgba(0,229,255,.22), rgba(0,229,255,.02));border:1px solid rgba(0,229,255,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;animation:hubglow 3.2s ease-in-out infinite">
+    <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:150px;height:150px;border-radius:50%;border:1px solid rgba(0,229,255,.18);animation:pulseglow 4s ease-in-out infinite"></div>
+    <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:112px;height:112px;border-radius:50%;background:radial-gradient(circle, rgba(0,229,255,.22), rgba(0,229,255,.02));border:1px solid rgba(0,229,255,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;animation:hubglow 3.2s ease-in-out infinite">
       <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:15px;color:#E8FBFF;letter-spacing:.05em;text-shadow:0 0 14px rgba(0,229,255,.8)">TODAY</div>
       <div style="font-size:9px;color:#7FA6AE;margin-top:3px">{{ userName }}</div>
     </div>
 
-    <div style="position:absolute;left:310px;top:55px;transform:translate(-50%,-50%);text-align:center;width:132px">
+    <div style="position:absolute;left:50%;top:15.28%;transform:translate(-50%,-50%);text-align:center;width:132px">
       <div style="width:13px;height:13px;border-radius:50%;background:#B98CFF;box-shadow:0 0 10px #B98CFF;margin:0 auto 8px"></div>
       <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:.1em;color:#B98CFF">SNAPSHOT</div>
       <div id="live-gpYesterday" style="font-size:12px;font-weight:700;color:#E8FBFF;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ gpYesterday }}</div>
       <div id="live-gapToTarget-caption" style="font-size:8.5px;color:#7FA6AE;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3">GP · {{ gapToTarget }} to target</div>
     </div>
 
-    <div style="position:absolute;left:500px;top:125px;transform:translate(-50%,-50%);text-align:center;width:132px">
+    <div style="position:absolute;left:80.65%;top:34.72%;transform:translate(-50%,-50%);text-align:center;width:132px">
       <div style="width:13px;height:13px;border-radius:50%;background:#00E5FF;box-shadow:0 0 10px #00E5FF;margin:0 auto 8px"></div>
       <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:.1em;color:#00E5FF">SCHEDULE</div>
       <div id="live-dayClass" style="font-size:12px;font-weight:700;color:#E8FBFF;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ dayClass }}</div>
       <div style="font-size:8.5px;color:#7FA6AE;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3">{{ headline }}</div>
     </div>
 
-    <div style="position:absolute;left:445px;top:290px;transform:translate(-50%,-50%);text-align:center;width:132px">
+    <div style="position:absolute;left:71.77%;top:80.56%;transform:translate(-50%,-50%);text-align:center;width:132px">
       <div style="width:13px;height:13px;border-radius:50%;background:#3EE6C4;box-shadow:0 0 10px #3EE6C4;margin:0 auto 8px"></div>
       <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:.1em;color:#3EE6C4">REFLECTION</div>
       <div style="font-size:12px;font-weight:700;color:#E8FBFF;margin-top:3px">FOCUS</div>
       <div style="font-size:8.5px;color:#7FA6AE;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3">{{ reflectionTag }}</div>
     </div>
 
-    <div style="position:absolute;left:185px;top:295px;transform:translate(-50%,-50%);text-align:center;width:132px">
+    <div style="position:absolute;left:29.84%;top:81.94%;transform:translate(-50%,-50%);text-align:center;width:132px">
       <div style="width:13px;height:13px;border-radius:50%;background:#FFC93C;box-shadow:0 0 10px #FFC93C;margin:0 auto 8px"></div>
       <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:.1em;color:#FFC93C">ATTENTION</div>
       <div style="font-size:12px;font-weight:700;color:#E8FBFF;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ attentionCount }}</div>
       <div style="font-size:8.5px;color:#7FA6AE;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3">{{ attentionTag }}</div>
     </div>
 
-    <div style="position:absolute;left:120px;top:130px;transform:translate(-50%,-50%);text-align:center;width:132px">
+    <div style="position:absolute;left:19.35%;top:36.11%;transform:translate(-50%,-50%);text-align:center;width:132px">
       <div style="width:13px;height:13px;border-radius:50%;background:#FF6FB0;box-shadow:0 0 10px #FF6FB0;margin:0 auto 8px"></div>
       <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:.1em;color:#FF6FB0">STOCK</div>
       <div id="live-stockCount-spoke" style="font-size:12px;font-weight:700;color:#E8FBFF;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ stockCount }}</div>
