@@ -218,7 +218,11 @@ function onRefreshClick() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('live-refresh-btn');
-  if (btn) btn.addEventListener('click', onRefreshClick);
+// Delegated on document, not bound to the button node directly: the dc-runtime
+// (support.js) re-renders the page through React after an async CDN fetch,
+// replacing the original button with a new node. A direct DOMContentLoaded
+// binding attaches to the node that gets discarded, leaving the visible
+// button with no listener at all.
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#live-refresh-btn')) onRefreshClick();
 });
