@@ -190,17 +190,18 @@ function analyzeBlockJS(rowData, modelCol, maxRow, today) {
   return { model, reg, site, flags };
 }
 
-// Groups every flagged car (any site) by its site label, so the live view
-// can switch sites without re-fetching the sheet. Keyed by normalized site
-// text to avoid casing splitting one site into two entries; Thornaby sorts
-// first, the rest alphabetically by label.
+// Groups flagged cars by site label, so the live view can switch sites
+// without re-fetching the sheet. Every site with at least one car gets an
+// entry (even if none of its cars are currently flagged, so a clean branch
+// stays selectable and shows "0 FLAGGED" instead of disappearing from the
+// dropdown). Keyed by normalized site text to avoid casing splitting one
+// site into two entries; Thornaby sorts first, the rest alphabetically.
 function groupFlaggedBySite(allCars) {
   const bySite = new Map(); // normalized key -> { label, flagged: [] }
   for (const c of allCars) {
-    if (c.flags.length === 0) continue;
     const key = normJS(c.site);
     if (!bySite.has(key)) bySite.set(key, { label: c.site, flagged: [] });
-    bySite.get(key).flagged.push(c);
+    if (c.flags.length > 0) bySite.get(key).flagged.push(c);
   }
 
   const entries = [...bySite.values()].sort((a, b) => {
