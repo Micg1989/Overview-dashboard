@@ -114,7 +114,7 @@ a:hover{color:#7FE9FF}
       <div style="width:13px;height:13px;border-radius:50%;background:#FF6FB0;box-shadow:0 0 10px #FF6FB0;margin:0 auto 8px"></div>
       <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:.1em;color:#FF6FB0">STOCK</div>
       <div id="live-stockCount-spoke" style="font-size:12px;font-weight:700;color:#E8FBFF;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ stockCount }}</div>
-      <div style="font-size:8.5px;color:#7FA6AE">Thornaby</div>
+      <div id="live-site-caption" style="font-size:8.5px;color:#7FA6AE">Thornaby</div>
     </div>
   </div>
 
@@ -155,9 +155,14 @@ a:hover{color:#7FE9FF}
 
     <sc-if value="{{ hasStock }}" hint-placeholder-val="{{ true }}">
     <div id="live-stock-section" style="border-top:1px solid rgba(255,111,176,.3);padding-top:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div style="font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:.12em;color:#FF6FB0">STOCK — THORNABY</div>
-        <div id="live-stockCount-badge" style="font-family:'Orbitron',sans-serif;font-size:9px;color:#05070C;background:#FF6FB0;padding:3px 8px;border-radius:2px">{{ stockCount }}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px;min-width:0">
+          <div style="font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:.12em;color:#FF6FB0;white-space:nowrap">STOCK —</div>
+          <select id="live-site-select" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;color:#F3B8D3;background:transparent;border:1px solid rgba(255,111,176,.4);border-radius:2px;padding:3px 6px;max-width:140px">
+            <option value="Thornaby">THORNABY</option>
+          </select>
+        </div>
+        <div id="live-stockCount-badge" style="font-family:'Orbitron',sans-serif;font-size:9px;color:#05070C;background:#FF6FB0;padding:3px 8px;border-radius:2px;white-space:nowrap">{{ stockCount }}</div>
       </div>
       <div id="live-stocklist" style="display:flex;flex-direction:column;gap:12px">
         <sc-for list="{{ stockItems }}" as="car" hint-placeholder-count="4">
