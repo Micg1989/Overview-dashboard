@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="./financial_snapshot.js"></script>
+<script src="./stock_check.js"></script>
+<script src="./app.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Orbitron:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+@keyframes pulseglow{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes spinrev{from{transform:rotate(360deg)}to{transform:rotate(0deg)}}
+@keyframes hubglow{0%,100%{box-shadow:0 0 30px rgba(0,229,255,.25);opacity:1}50%{box-shadow:0 0 55px rgba(0,229,255,.5);opacity:.92}}
+body{margin:0;background:#05070C}
+a{color:#00E5FF}
+a:hover{color:#7FE9FF}
+</style>
+</helmet>
+
+<div style="width:620px;margin:0 auto;background:radial-gradient(ellipse at 50% 0%, rgba(0,229,255,.09), transparent 55%), #05070C;color:#CFE9EE;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,229,255,.3);border-radius:6px;box-shadow:0 0 60px rgba(0,229,255,.12)">
+
+  <div style="padding:22px 28px 0;display:flex;justify-content:space-between;align-items:flex-start">
+    <div>
+      <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:12px;letter-spacing:.16em;color:#00E5FF;text-shadow:0 0 12px rgba(0,229,255,.7)">ARROW MOTOR COMPANY</div>
+      <div style="font-size:9.5px;letter-spacing:.1em;color:#5C8A93;margin-top:4px">THORNABY SERVICE CENTRE</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:10px;letter-spacing:.1em;color:#8FB8C0">{{ dateLabel }}</div>
+      <div style="margin-top:8px">
+        <button id="live-refresh-btn" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;color:#00E5FF;background:transparent;border:1px solid rgba(0,229,255,.4);border-radius:2px;padding:5px 10px;cursor:pointer">REFRESH</button>
+      </div>
+      <div id="live-synced-at" style="font-size:8px;color:#5C8A93;margin-top:5px">Not yet synced</div>
+    </div>
+  </div>
+
+  <div style="position:relative;height:360px;margin:6px 0 0">
+    <svg width="620" height="360" viewBox="0 0 620 360" style="position:absolute;inset:0">
+      <circle cx="310" cy="180" r="60" fill="none" stroke="rgba(0,229,255,.35)"></circle>
+      <circle cx="310" cy="180" r="105" fill="none" stroke="rgba(0,229,255,.15)" stroke-dasharray="2 6"></circle>
+      <circle cx="310" cy="180" r="150" fill="none" stroke="rgba(0,229,255,.09)" stroke-dasharray="1 8"></circle>
+      <line x1="310" y1="180" x2="310" y2="55" stroke="#B98CFF" stroke-opacity=".55"></line>
+      <line x1="310" y1="180" x2="500" y2="125" stroke="#00E5FF" stroke-opacity=".55"></line>
+      <line x1="310" y1="180" x2="445" y2="290" stroke="#3EE6C4" stroke-opacity=".55"></line>
+      <line x1="310" y1="180" x2="185" y2="295" stroke="#FFC93C" stroke-opacity=".55"></line>
+      <line x1="310" y1="180" x2="120" y2="130" stroke="#FF6FB0" stroke-opacity=".55"></line>
+
+      <g style="transform-origin:310px 180px;animation:spin 90s linear infinite">
+        <circle cx="416" cy="180" r="1.6" fill="#00E5FF" opacity=".8"></circle>
+        <circle cx="310" cy="286" r="1.3" fill="#B98CFF" opacity=".7"></circle>
+        <circle cx="204" cy="180" r="1.8" fill="#FF6FB0" opacity=".75"></circle>
+        <circle cx="310" cy="74" r="1.4" fill="#3EE6C4" opacity=".7"></circle>
+        <circle cx="380" cy="238" r="1.2" fill="#FFC93C" opacity=".65"></circle>
+        <circle cx="245" cy="118" r="1.5" fill="#00E5FF" opacity=".7"></circle>
+        <circle cx="245" cy="242" r="1.3" fill="#FF6FB0" opacity=".6"></circle>
+        <circle cx="380" cy="122" r="1.2" fill="#B98CFF" opacity=".65"></circle>
+      </g>
+      <g style="transform-origin:310px 180px;animation:spinrev 130s linear infinite">
+        <circle cx="461" cy="180" r="1.3" fill="#00E5FF" opacity=".55"></circle>
+        <circle cx="310" cy="331" r="1.1" fill="#3EE6C4" opacity=".5"></circle>
+        <circle cx="159" cy="180" r="1.5" fill="#FFC93C" opacity=".55"></circle>
+        <circle cx="310" cy="29" r="1.2" fill="#FF6FB0" opacity=".5"></circle>
+        <circle cx="203" cy="98" r="1.1" fill="#B98CFF" opacity=".5"></circle>
+        <circle cx="417" cy="262" r="1.3" fill="#00E5FF" opacity=".55"></circle>
+        <circle cx="417" cy="98" r="1" fill="#3EE6C4" opacity=".45"></circle>
+        <circle cx="203" cy="262" r="1.2" fill="#FFC93C" opacity=".5"></circle>
+        <circle cx="350" cy="60" r="1" fill="#FF6FB0" opacity=".45"></circle>
+        <circle cx="270" cy="300" r="1.1" fill="#00E5FF" opacity=".5"></circle>
+      </g>
+    </svg>
+
+    <div style="position:absolute;left:310px;top:180px;transform:translate(-50%,-50%);width:150px;height:150px;border-radius:50%;border:1px solid rgba(0,229,255,.18);animation:pulseglow 4s ease-in-out infinite"></div>
+    <div style="position:absolute;left:310px;top:180px;transform:translate(-50%,-50%);width:112px;height:112px;border-radius:50%;background:radial-gradient(circle, rgba(0,229,255,.22), rgba(0,229,255,.02));border:1px solid rgba(0,229,255,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;animation:hubglow 3.2s ease-in-out infinite">
+      <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:15px;color:#E8FBFF;letter-spacing:.05em;text-shadow:0 0 14px rgba(0,229,255,.8)">TODAY</div>
+      <div style="font-size:9px;color:#7FA6AE;margin-top:3px">{{ userName }}</div>
+    </div>
+
+    <div style="position:absolute;left:310px;top:55px;transform:translate(-50%,-50%);text-align:center;width:132px">
+      <div style="width:13px;height:13px;border-radius:50%;background:#B98CFF;box-shadow:0 0 10px #B98CFF;margin:0 auto 8px"></div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:.1em;color:#B98CFF">SNAPSHOT</div>
+      <div id="live-gpYesterday" style="font-size:12px;font-weight:700;color:#E8FBFF;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ gpYesterday }}</div>
+      <div id="live-gapToTarget-caption" style="font-size:8.5px;color:#7FA6AE;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3">GP · {{ gapToTarget }} to target</div>
+    </div>
+
+    <div style="position:absolute;left:500px;top:125px;transform:translate(-50%,-50%);text-align:center;width:132px">
+      <div style="width:13px;height:13px;border-radius:50%;background:#00E5FF;box-shadow:0 0 10px #00E5FF;margin:0 auto 8px"></div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:.1em;color:#00E5FF">SCHEDULE</div>
+      <div id="live-dayClass" style="font-size:12px;font-weight:700;color:#E8FBFF;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ dayClass }}</div>
+      <div style="font-size:8.5px;color:#7FA6AE;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3">{{ headline }}</div>
+    </div>
+
+    <div style="position:absolute;left:445px;top:290px;transform:translate(-50%,-50%);text-align:center;width:132px">
+      <div style="width:13px;height:13px;border-radius:50%;background:#3EE6C4;box-shadow:0 0 10px #3EE6C4;margin:0 auto 8px"></div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:.1em;color:#3EE6C4">REFLECTION</div>
+      <div style="font-size:12px;font-weight:700;color:#E8FBFF;margin-top:3px">FOCUS</div>
+      <div style="font-size:8.5px;color:#7FA6AE;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3">{{ reflectionTag }}</div>
+    </div>
+
+    <div style="position:absolute;left:185px;top:295px;transform:translate(-50%,-50%);text-align:center;width:132px">
+      <div style="width:13px;height:13px;border-radius:50%;background:#FFC93C;box-shadow:0 0 10px #FFC93C;margin:0 auto 8px"></div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:.1em;color:#FFC93C">ATTENTION</div>
+      <div style="font-size:12px;font-weight:700;color:#E8FBFF;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ attentionCount }}</div>
+      <div style="font-size:8.5px;color:#7FA6AE;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3">{{ attentionTag }}</div>
+    </div>
+
+    <div style="position:absolute;left:120px;top:130px;transform:translate(-50%,-50%);text-align:center;width:132px">
+      <div style="width:13px;height:13px;border-radius:50%;background:#FF6FB0;box-shadow:0 0 10px #FF6FB0;margin:0 auto 8px"></div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:.1em;color:#FF6FB0">STOCK</div>
+      <div id="live-stockCount-spoke" style="font-size:12px;font-weight:700;color:#E8FBFF;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ stockCount }}</div>
+      <div style="font-size:8.5px;color:#7FA6AE">Thornaby</div>
+    </div>
+  </div>
+
+  <div style="padding:8px 30px 22px;border-top:1px solid rgba(0,229,255,.2)">
+    <div style="font-family:'Orbitron',sans-serif;font-weight:600;font-size:19px;line-height:1.4;color:#F2FCFF;margin:20px 0 20px">{{ headlineFull }}</div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px">
+      <span style="border:1px solid rgba(0,229,255,.35);border-radius:2px;padding:6px 10px;font-size:10px;letter-spacing:.06em;color:#9FD9E2">● CALL BACK TRACKER</span>
+      <span style="border:1px solid rgba(0,229,255,.35);border-radius:2px;padding:6px 10px;font-size:10px;letter-spacing:.06em;color:#9FD9E2">● EMAILS BY 9:30</span>
+      <span style="border:1px solid rgba(0,229,255,.35);border-radius:2px;padding:6px 10px;font-size:10px;letter-spacing:.06em;color:#9FD9E2">● UPDATE FIGURES</span>
+    </div>
+
+    <div style="border:1px solid rgba(62,230,196,.35);border-radius:3px;background:rgba(62,230,196,.04);padding:16px 18px;margin-bottom:22px">
+      <div style="font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:.12em;color:#3EE6C4;margin-bottom:9px">REFLECTION</div>
+      <div style="font-size:12.5px;line-height:1.7;color:#B9DEE5">{{ reflectionText }}</div>
+    </div>
+
+    <div id="live-timeblocks">
+    <sc-for list="{{ timeBlocks }}" as="block" hint-placeholder-count="3">
+      <div style="display:flex;gap:14px;padding:10px 0;border-top:1px solid rgba(0,229,255,.15)">
+        <div style="font-size:10px;color:#5C8A93;min-width:88px">{{ block.time }}</div>
+        <div style="font-size:11.5px;line-height:1.5;color:#9FD9E2">{{ block.text }}</div>
+      </div>
+    </sc-for>
+    </div>
+
+    <sc-if value="{{ hasAttention }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid rgba(255,201,60,.3);padding-top:16px;margin:22px 0">
+      <div style="font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:.12em;color:#FFC93C;margin-bottom:10px">NEEDS ATTENTION</div>
+      <sc-for list="{{ attentionItems }}" as="item" hint-placeholder-count="1">
+        <div style="margin-bottom:14px">
+          <div style="font-size:12.5px;font-weight:700;color:#F2FCFF;margin-bottom:4px">{{ item.title }}</div>
+          <div style="font-size:11.5px;line-height:1.6;color:#7FA6AE">{{ item.detail }}</div>
+        </div>
+      </sc-for>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ hasStock }}" hint-placeholder-val="{{ true }}">
+    <div id="live-stock-section" style="border-top:1px solid rgba(255,111,176,.3);padding-top:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:.12em;color:#FF6FB0">STOCK — THORNABY</div>
+        <div id="live-stockCount-badge" style="font-family:'Orbitron',sans-serif;font-size:9px;color:#05070C;background:#FF6FB0;padding:3px 8px;border-radius:2px">{{ stockCount }}</div>
+      </div>
+      <div id="live-stocklist" style="display:flex;flex-direction:column;gap:12px">
+        <sc-for list="{{ stockItems }}" as="car" hint-placeholder-count="4">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="font-size:9.5px;border:1px solid rgba(255,111,176,.4);color:#F3B8D3;padding:3px 6px;border-radius:2px;white-space:nowrap;margin-top:1px">{{ car.reg }}</div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#E8FBFF">{{ car.model }}</div>
+              <div style="font-size:11px;color:#5C8A93;margin-top:2px">{{ car.flag }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+    <!-- Known limitation: if today's page loaded with zero flagged Thornaby
+         cars, this whole block never mounts (sc-if), so the refresh button
+         can't reveal it even if a later sync finds new flags. Re-asking
+         Claude to rebuild the page picks that up; the button alone won't. -->
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:620}}">
+class Component extends DCLogic {
+  renderVals() {
+    const data = this.props.data || SAMPLE_DATA;
+    return {
+      ...data,
+      hasAttention: (data.attentionItems || []).length > 0,
+      hasStock: (data.stockItems || []).length > 0,
+      stockCount: `${(data.stockItems || []).length} FLAGGED`,
+    };
+  }
+}
+
+const SAMPLE_DATA = {
+  "dateLabel": "THU · 20 AUG 2026",
+  "userName": "MICHAEL",
+  "gpYesterday": "£484.05",
+  "gapToTarget": "£15.2K",
+  "dayClass": "1 – 3 PM",
+  "headline": "loan car checklist",
+  "headlineFull": "Two hours with the loan car checklist, Michael — then the day opens up.",
+  "reflectionTag": "delegation",
+  "reflectionText": "When you draft the loan car checklist this afternoon, write it so someone else could run it without asking you anything — that's the same delegation muscle as Adam's pricing sheet. Check at the end of the day whether you actually wrote it that way, or just wrote it for yourself.",
+  "attentionCount": "1 ITEM",
+  "attentionTag": "wrap-up buffer tmrw",
+  "timeBlocks": [
+    {
+      "time": "UNTIL 13:00",
+      "text": "Open all morning — nothing on the books before one."
+    },
+    {
+      "time": "13:00–15:00",
+      "text": "Blocked for the loan car checklist: review it, then draft a plan someone else can follow."
+    },
+    {
+      "time": "15:00 ONWARD",
+      "text": "Nothing else on the books — open for whatever comes up."
+    }
+  ],
+  "attentionItems": [
+    {
+      "title": "Bring the wrap-up basics tomorrow",
+      "detail": "Tomorrow's Wrap-up buffer (3–4 PM) is for catching what's left over — unfinished tech 1-1s and checklist follow-ups — before Adam's out Monday."
+    }
+  ],
+  "stockItems": [
+    {
+      "reg": "DT19 GDU",
+      "model": "Vauxhall Mokka X Elite 1.6 CDTi",
+      "flag": "Service due: Service due 07/2026 (OVERDUE) · Unactioned note: Turbo Replacement"
+    },
+    {
+      "reg": "KK24 DHO",
+      "model": "Range Rover Sport DYN SE D MHEV",
+      "flag": "Service due: Service due 08/2026 (OVERDUE)"
+    },
+    {
+      "reg": "NU67 UXC",
+      "model": "Volkswagen Polo Match Edition 1.0",
+      "flag": "Service due: Service due 05/2026 (OVERDUE)"
+    },
+    {
+      "reg": "FY65 TZM",
+      "model": "Kia Sorento KX-4 CRDI ISG 4X4",
+      "flag": "MOT due: MOT due 17/07/2026 (OVERDUE)"
+    },
+    {
+      "reg": "YH16 UBD",
+      "model": "Audi A6 S-Line Black Edition Avant",
+      "flag": "Service due: Service due 08/2026 · Health check: Health check not marked as done"
+    },
+    {
+      "reg": "ND18 OXW",
+      "model": "Renault Kadjar Dynamique",
+      "flag": "MOT due: MOT due 01/01/2027 · Service due: Service due 08/2026 · Health check: Health check not marked as done"
+    },
+    {
+      "reg": "SR15 CWZ",
+      "model": "Audi A4 SE Technik TDI Quattro S-A",
+      "flag": "MOT due: MOT due 01/09/2026 · Service due: Service due 08/2026 · Health check: Health check not marked as done"
+    }
+  ]
+};
+
+</script>
+</body>
+</html>
