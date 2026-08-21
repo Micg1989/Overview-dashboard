@@ -132,13 +132,33 @@ a:hover{color:#7FE9FF}
       <div style="font-size:12.5px;line-height:1.7;color:#B9DEE5">{{ reflectionText }}</div>
     </div>
 
-    <div id="live-timeblocks">
-    <sc-for list="{{ timeBlocks }}" as="block" hint-placeholder-count="3">
-      <div style="display:flex;gap:14px;padding:10px 0;border-top:1px solid rgba(0,229,255,.15)">
-        <div style="font-size:10px;color:#5C8A93;min-width:88px">{{ block.time }}</div>
-        <div style="font-size:11.5px;line-height:1.5;color:#9FD9E2">{{ block.text }}</div>
+    <div style="margin-bottom:18px">
+      <div style="font-family:'Orbitron',sans-serif;font-size:9.5px;letter-spacing:.12em;color:#5C8A93;margin-bottom:8px">YESTERDAY</div>
+      <div style="font-size:11.5px;line-height:1.5;color:#7FA6AE;font-style:italic">Anything from yesterday still need carrying over?</div>
+    </div>
+
+    <div style="margin-bottom:18px">
+      <div style="font-family:'Orbitron',sans-serif;font-size:9.5px;letter-spacing:.12em;color:#00E5FF;margin-bottom:4px">TODAY</div>
+      <div id="live-timeblocks">
+      <sc-for list="{{ timeBlocks }}" as="block" hint-placeholder-count="3">
+        <div style="display:flex;gap:14px;padding:10px 0;border-top:1px solid rgba(0,229,255,.15)">
+          <div style="font-size:10px;color:#5C8A93;min-width:88px">{{ block.time }}</div>
+          <div style="font-size:11.5px;line-height:1.5;color:#9FD9E2">{{ block.text }}</div>
+        </div>
+      </sc-for>
       </div>
-    </sc-for>
+    </div>
+
+    <div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:9.5px;letter-spacing:.12em;color:#5C8A93;margin-bottom:4px">TOMORROW — A PEEK AHEAD</div>
+      <div id="live-tomorrow-blocks">
+      <sc-for list="{{ tomorrowBlocks }}" as="block" hint-placeholder-count="2">
+        <div style="display:flex;gap:14px;padding:8px 0;border-top:1px solid rgba(0,229,255,.1)">
+          <div style="font-size:10px;color:#5C8A93;min-width:88px">{{ block.time }}</div>
+          <div style="font-size:11px;line-height:1.5;color:#7FA6AE">{{ block.text }}</div>
+        </div>
+      </sc-for>
+      </div>
     </div>
 
     <sc-if value="{{ hasAttention }}" hint-placeholder-val="{{ true }}">
@@ -223,6 +243,12 @@ const SAMPLE_DATA = {
     {
       "time": "15:00 ONWARD",
       "text": "Nothing else on the books — open for whatever comes up."
+    }
+  ],
+  "tomorrowBlocks": [
+    {
+      "time": "—",
+      "text": "Nothing on the books yet — refresh again closer to tomorrow to check."
     }
   ],
   "attentionItems": [

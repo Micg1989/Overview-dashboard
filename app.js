@@ -6,8 +6,8 @@
 //
 // Scope, by design (agreed before building):
 //   LIVE on refresh: GP yesterday, £ to target, flagged Thornaby cars,
-//                     the schedule's time blocks (using the calendar's own
-//                     event text — literal, not phrased)
+//                     today's time blocks and tomorrow's peek-ahead (using
+//                     the calendar's own event text — literal, not phrased)
 //   STATIC, unchanged by refresh: headline, headlineFull, reflectionTag,
 //                     reflectionText, attentionItems/Count/Tag
 //   These stay as Claude last wrote them — a browser button has no "me" on
@@ -46,20 +46,17 @@ async function apiGet(url) {
 }
 
 // ---- Calendar ----
-async function fetchScheduleData() {
-  const calList = await apiGet('https://www.googleapis.com/calendar/v3/users/me/calendarList');
-  const today = new Date();
-  const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
-
+// Fetches one calendar-day's timed events (all-day events skipped — they
+// don't fit the hour-range timeline) across every calendar on the account.
+async function fetchEventsForRange(calList, rangeStart, rangeEnd) {
   let events = [];
   for (const cal of (calList.items || [])) {
     try {
       const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events`
-        + `?timeMin=${dayStart.toISOString()}&timeMax=${dayEnd.toISOString()}&singleEvents=true&orderBy=startTime`;
+        + `?timeMin=${rangeStart.toISOString()}&timeMax=${rangeEnd.toISOString()}&singleEvents=true&orderBy=startTime`;
       const evs = await apiGet(url);
       for (const e of (evs.items || [])) {
-        if (!e.start || !e.start.dateTime) continue; // skip all-day events for the timeline
+        if (!e.start || !e.start.dateTime) continue;
         events.push({
           start: new Date(e.start.dateTime),
           end: new Date(e.end.dateTime),
@@ -71,6 +68,20 @@ async function fetchScheduleData() {
     }
   }
   events.sort((a, b) => a.start - b.start);
+  return events;
+}
+
+async function fetchScheduleData() {
+  const calList = await apiGet('https://www.googleapis.com/calendar/v3/users/me/calendarList');
+  const today = new Date();
+  const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
+  const tomorrowEnd = new Date(dayEnd); tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
+
+  const [events, tomorrowEvents] = await Promise.all([
+    fetchEventsForRange(calList, dayStart, dayEnd),
+    fetchEventsForRange(calList, dayEnd, tomorrowEnd),
+  ]);
 
   const timeBlocks = [];
   const dayOpen = new Date(dayStart); dayOpen.setHours(8, 0, 0, 0);
@@ -96,10 +107,31 @@ async function fetchScheduleData() {
   else if (events.length === 1) dayClass = `${fmt24h(events[0].start)} – ${fmt24h(events[0].end)}`;
   else dayClass = `${events.length} EVENTS`;
 
-  return { dayClass, timeBlocks };
+  const tomorrowBlocks = tomorrowEvents.length === 0
+    ? [{ time: "—", text: "Nothing on the books yet." }]
+    : tomorrowEvents.map(e => ({ time: `${fmt24h(e.start)}–${fmt24h(e.end)}`, text: e.summary }));
+
+  return { dayClass, timeBlocks, tomorrowBlocks };
 }
 
 // ---- DOM update ----
+// Rebuilds a time-block list's rows into `containerId` from scratch — shared
+// by today's schedule and tomorrow's peek-ahead, which use the same row
+// shape with slightly different emphasis (rowStyle/timeStyle/textStyle).
+function renderBlockRows(containerId, blocks, rowStyle, textStyle) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  for (const b of blocks) {
+    const row = document.createElement('div');
+    row.style.cssText = rowStyle;
+    row.innerHTML = `<div style="font-size:10px;color:#5C8A93;min-width:88px"></div><div style="${textStyle}"></div>`;
+    row.children[0].textContent = b.time;
+    row.children[1].textContent = b.text;
+    container.appendChild(row);
+  }
+}
+
 function renderLiveUpdate(data) {
   const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
 
@@ -107,18 +139,12 @@ function renderLiveUpdate(data) {
   setText('live-gapToTarget-caption', `GP · ${data.gapToTargetLabel}`);
   setText('live-dayClass', data.dayClass);
 
-  const tbContainer = document.getElementById('live-timeblocks');
-  if (tbContainer) {
-    tbContainer.innerHTML = '';
-    for (const b of data.timeBlocks) {
-      const row = document.createElement('div');
-      row.style.cssText = "display:flex;gap:14px;padding:10px 0;border-top:1px solid rgba(0,229,255,.15)";
-      row.innerHTML = `<div style="font-size:10px;color:#5C8A93;min-width:88px"></div><div style="font-size:11.5px;line-height:1.5;color:#9FD9E2"></div>`;
-      row.children[0].textContent = b.time;
-      row.children[1].textContent = b.text;
-      tbContainer.appendChild(row);
-    }
-  }
+  renderBlockRows('live-timeblocks', data.timeBlocks,
+    "display:flex;gap:14px;padding:10px 0;border-top:1px solid rgba(0,229,255,.15)",
+    "font-size:11.5px;line-height:1.5;color:#9FD9E2");
+  renderBlockRows('live-tomorrow-blocks', data.tomorrowBlocks,
+    "display:flex;gap:14px;padding:8px 0;border-top:1px solid rgba(0,229,255,.1)",
+    "font-size:11px;line-height:1.5;color:#7FA6AE");
 
   const ts = document.getElementById('live-synced-at');
   if (ts) ts.textContent = `Last synced ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
