@@ -116,21 +116,29 @@ async function fetchScheduleData(dayStart, dayEnd, tomorrowEnd) {
 // always midnight UTC, per the API docs) — so tasks slot into the same
 // three buckets as the calendar sections by comparing that date against
 // dayStart/dayEnd/tomorrowEnd, same boundaries fetchScheduleData uses.
+// Tasks is a separate, optional dependency — a disabled API, a missing
+// scope grant, or any other Tasks-specific failure must not take down the
+// GP/stock/schedule refresh alongside it, so every failure here degrades
+// to empty buckets rather than throwing out of runRefresh's Promise.all.
 async function fetchTasksData(dayStart, dayEnd, tomorrowEnd) {
-  const lists = await apiGet('https://tasks.googleapis.com/tasks/v1/users/@me/lists');
   let tasks = [];
-  for (const list of (lists.items || [])) {
-    try {
-      const url = `https://tasks.googleapis.com/tasks/v1/lists/${encodeURIComponent(list.id)}/tasks`
-        + `?showCompleted=false&showHidden=false&dueMax=${tomorrowEnd.toISOString()}`;
-      const res = await apiGet(url);
-      for (const t of (res.items || [])) {
-        if (!t.due || t.status === 'completed') continue;
-        tasks.push({ title: t.title || "Untitled task", due: new Date(t.due) });
+  try {
+    const lists = await apiGet('https://tasks.googleapis.com/tasks/v1/users/@me/lists');
+    for (const list of (lists.items || [])) {
+      try {
+        const url = `https://tasks.googleapis.com/tasks/v1/lists/${encodeURIComponent(list.id)}/tasks`
+          + `?showCompleted=false&showHidden=false&dueMax=${tomorrowEnd.toISOString()}`;
+        const res = await apiGet(url);
+        for (const t of (res.items || [])) {
+          if (!t.due || t.status === 'completed') continue;
+          tasks.push({ title: t.title || "Untitled task", due: new Date(t.due) });
+        }
+      } catch (err) {
+        console.warn("Tasks fetch failed for", list.id, err);
       }
-    } catch (err) {
-      console.warn("Tasks fetch failed for", list.id, err);
     }
+  } catch (err) {
+    console.warn("Tasks fetch failed:", err);
   }
 
   return {
