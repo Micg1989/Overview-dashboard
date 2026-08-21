@@ -7,14 +7,15 @@
 // Scope, by design (agreed before building):
 //   LIVE on refresh: GP yesterday, £ to target, flagged Thornaby cars,
 //                     today's time blocks and tomorrow's peek-ahead (using
-//                     the calendar's own event text — literal, not phrased)
+//                     the calendar's own event text — literal, not phrased),
+//                     overdue/due-today/due-tomorrow Google Tasks
 //   STATIC, unchanged by refresh: headline, headlineFull, reflectionTag,
 //                     reflectionText, attentionItems/Count/Tag
 //   These stay as Claude last wrote them — a browser button has no "me" on
 //   the other end of it to re-write those with judgement.
 
 const CLIENT_ID = "435191356512-mn75l0p56egmqa7kr9risl33bbk8ti0e.apps.googleusercontent.com";
-const SCOPES = "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/spreadsheets.readonly";
+const SCOPES = "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/spreadsheets.readonly https://www.googleapis.com/auth/tasks.readonly";
 const SPREADSHEET_1T = "1Gbvo5RCkoBbQ0oPfApaOCIHAe8jpcLVrkOhXoQFHL5c"; // 1T Arrow Motor Company
 const SPREADSHEET_2D = "1zAf3l1dkhpW1ZqJsEcMqN5Duqdvf4aYZpWrC8euOc7M"; // 2D Arrow Motor Company
 
@@ -71,12 +72,8 @@ async function fetchEventsForRange(calList, rangeStart, rangeEnd) {
   return events;
 }
 
-async function fetchScheduleData() {
+async function fetchScheduleData(dayStart, dayEnd, tomorrowEnd) {
   const calList = await apiGet('https://www.googleapis.com/calendar/v3/users/me/calendarList');
-  const today = new Date();
-  const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
-  const tomorrowEnd = new Date(dayEnd); tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
 
   const [events, tomorrowEvents] = await Promise.all([
     fetchEventsForRange(calList, dayStart, dayEnd),
@@ -114,6 +111,35 @@ async function fetchScheduleData() {
   return { dayClass, timeBlocks, tomorrowBlocks };
 }
 
+// ---- Tasks ----
+// Google Tasks' `due` field only ever carries a date (the time portion is
+// always midnight UTC, per the API docs) — so tasks slot into the same
+// three buckets as the calendar sections by comparing that date against
+// dayStart/dayEnd/tomorrowEnd, same boundaries fetchScheduleData uses.
+async function fetchTasksData(dayStart, dayEnd, tomorrowEnd) {
+  const lists = await apiGet('https://tasks.googleapis.com/tasks/v1/users/@me/lists');
+  let tasks = [];
+  for (const list of (lists.items || [])) {
+    try {
+      const url = `https://tasks.googleapis.com/tasks/v1/lists/${encodeURIComponent(list.id)}/tasks`
+        + `?showCompleted=false&showHidden=false&dueMax=${tomorrowEnd.toISOString()}`;
+      const res = await apiGet(url);
+      for (const t of (res.items || [])) {
+        if (!t.due || t.status === 'completed') continue;
+        tasks.push({ title: t.title || "Untitled task", due: new Date(t.due) });
+      }
+    } catch (err) {
+      console.warn("Tasks fetch failed for", list.id, err);
+    }
+  }
+
+  return {
+    overdue: tasks.filter(t => t.due < dayStart),
+    dueToday: tasks.filter(t => t.due >= dayStart && t.due < dayEnd),
+    dueTomorrow: tasks.filter(t => t.due >= dayEnd && t.due < tomorrowEnd),
+  };
+}
+
 // ---- DOM update ----
 // Rebuilds a time-block list's rows into `containerId` from scratch — shared
 // by today's schedule and tomorrow's peek-ahead, which use the same row
@@ -145,6 +171,9 @@ function renderLiveUpdate(data) {
   renderBlockRows('live-tomorrow-blocks', data.tomorrowBlocks,
     "display:flex;gap:14px;padding:8px 0;border-top:1px solid rgba(0,229,255,.1)",
     "font-size:11px;line-height:1.5;color:#7FA6AE");
+  renderBlockRows('live-yesterday-tasks', data.overdueTasks,
+    "display:flex;gap:14px;padding:8px 0;border-top:1px solid rgba(255,201,60,.15)",
+    "font-size:11px;line-height:1.5;color:#FFC93C");
 
   const ts = document.getElementById('live-synced-at');
   if (ts) ts.textContent = `Last synced ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
@@ -222,9 +251,13 @@ async function runRefresh() {
   setButtonState('loading');
   try {
     const today = new Date();
+    const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
+    const tomorrowEnd = new Date(dayEnd); tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
 
-    const [scheduleData, snapRaw, stockGrid] = await Promise.all([
-      fetchScheduleData(),
+    const [scheduleData, tasksData, snapRaw, stockGrid] = await Promise.all([
+      fetchScheduleData(dayStart, dayEnd, tomorrowEnd),
+      fetchTasksData(dayStart, dayEnd, tomorrowEnd),
       apiGet(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_1T}/values/'Service%20Profit'!A1:P60`),
       apiGet(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_2D}?ranges=Stocklist&fields=sheets.properties.gridProperties,sheets.data.rowData.values(formattedValue,effectiveFormat.backgroundColor)`),
     ]);
@@ -236,11 +269,15 @@ async function runRefresh() {
       ? `${gbpShort(snap.remaining_to_target)} to target`
       : `${gbpShort(snap.remaining_to_target)} over target`;
 
+    const taskBlock = t => ({ time: "TASK", text: t.title });
+
     renderLiveUpdate({
       gpYesterday: snap.prev_day_gp !== null ? fmtGbpFull(snap.prev_day_gp) : "—",
       gapToTargetLabel,
       dayClass: scheduleData.dayClass,
-      timeBlocks: scheduleData.timeBlocks,
+      timeBlocks: [...scheduleData.timeBlocks, ...tasksData.dueToday.map(taskBlock)],
+      tomorrowBlocks: [...scheduleData.tomorrowBlocks, ...tasksData.dueTomorrow.map(taskBlock)],
+      overdueTasks: tasksData.overdue.map(t => ({ time: "OVERDUE", text: t.title })),
     });
 
     lastStockBySite = stock.bySite;
